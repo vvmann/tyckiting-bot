@@ -15,6 +15,7 @@ var botNames = [
 
 module.exports = function Ai() {
 
+  var radaredPositions = [];
   var lastTarget = {};
 
   function prepareAction(action, x, y) {
@@ -38,7 +39,6 @@ module.exports = function Ai() {
         var botsAlive = _.filter(players, function(player) {
           return player.alive;
         });
-        console.log(botsAlive);
         if (!hasRadaring && botsAlive.length > 1) {
           finalActions[botId] = {
             mode: "RADAR",
@@ -57,6 +57,15 @@ module.exports = function Ai() {
     }, {});
   }
 
+  function containsPos(array, position) {
+    for (var i; i < array.length; i++) {
+      if (array[i].x === newRadaringPosition.x && allPosCopy[i].y === newRadaringPosition.y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   function moveOrRadar(player, allPos, maxMove) {
     var moveOrRadar = randInt(0, 10);
     if (moveOrRadar < 3) {
@@ -68,7 +77,27 @@ module.exports = function Ai() {
       }
     }
 
-    var newRadaringPosition = allPos[randInt(0, allPos.length - 1)];
+    var allPosCopy = _.clone(allPos);
+
+    var radaredNeighbours = _.map(radaredPositions, function(position) {
+      return position.neighbours(position, 3);
+    });
+    radaredNeighbours.push(radaredPositions);
+
+    do {
+      var newRadaringPosition = allPosCopy[randInt(0, allPos.length - 1)];
+
+      for (var i; i < allPosCopy.length; i++) {
+        if (allPosCopy[i].x === newRadaringPosition.x && allPosCopy[i].y === newRadaringPosition.y) {
+          allPosCopy.splice(i, 1);
+          break;
+        }
+      }
+    }
+    while (containsPos(allPosCopy, newRadaringPosition));
+
+    if (radaredPositions.length > 8) radaredPositions = radaredPositions.splice(radaredPositions.length - 1);
+
     return {
       mode: "RADAR",
       action: prepareAction(player.radar, newRadaringPosition.x, newRadaringPosition.y)
