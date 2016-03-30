@@ -15,6 +15,8 @@ var botNames = [
 
 module.exports = function Ai() {
 
+  var lastTarget = {};
+
   function prepareAction(action, x, y) {
     return function() {
       action(x, y);
@@ -60,7 +62,9 @@ module.exports = function Ai() {
     }
   }
 
-  var lastTarget = {};
+  function isLegalPosition(x, y, radius) {
+    return Math.abs(x) + Math.abs(y) <= radius;
+  }
 
   function evade(config, players, event, plannedActions){
     var evadePositions = [
@@ -71,10 +75,12 @@ module.exports = function Ai() {
     var player = players[event.botId];
 
     do {
-      var x = player.x + evadePositions[(Math.floor(Math.random() * evadePositions.length))].x;
-      var y = player.y + evadePositions[(Math.floor(Math.random() * evadePositions.length))].y;
+      var index = Math.floor(Math.random() * evadePositions.length);
+      var x = player.x + evadePositions[index].x;
+      var y = player.y + evadePositions[index].y;
+      evadePositions = evadePositions.splice(index, 1);
     }
-    while (x < config.radius && x > -config.radius && y < config.radius && y > -config.radius);
+    while (isLegalPosition(x, y, config.radius));
 
     console.log(x);
     console.log(y);
