@@ -31,6 +31,7 @@ module.exports = function Ai() {
   }
 
   function planForAttack(plannedActions, players, x, y) {
+    var offSetCounter = 0;
     var hasRadaring = false;
     return _.reduce(plannedActions, function(finalActions, player, botId, collection) {
       if (player.mode === "EVADE") {
@@ -47,10 +48,18 @@ module.exports = function Ai() {
           hasRadaring = true;
         }
         else {
-          finalActions[botId] = {
-            mode: "ATTACK",
-            action: prepareAction(players[botId].cannon, x, y)
-          };
+          if (offSetCounter == 0) {
+            finalActions[botId] = {
+              mode: "ATTACK",
+              action: prepareAction(players[botId].cannon, x, y - 1)
+            };
+            offSetCounter += 1;
+          } else {
+            finalActions[botId] = {
+              mode: "ATTACK",
+              action: prepareAction(players[botId].cannon, x, y + 1)
+            };
+          }
         }
       }
       return finalActions;
