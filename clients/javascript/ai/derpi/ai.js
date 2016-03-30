@@ -30,17 +30,30 @@ module.exports = function Ai() {
   }
 
   function planForAttack(plannedActions, players, x, y) {
-    return _.reduce(plannedActions, function(result, value, key) {
-      if (value.mode === "EVADE") {
-        result[key] = value;
+    var hasRadaring = false;
+    return _.reduce(plannedActions, function(finalActions, player, botId, collection) {
+      if (player.mode === "EVADE") {
+        finalActions[botId] = player;
       } else {
-        _.filter()
-        result[key] = {
-          mode: "ATTACK",
-          action: prepareAction(players[key].cannon, x, y)
-        };
+        var botsAlive = _.filter(players, function(player) {
+          return player.alive;
+        });
+        console.log(botsAlive);
+        if (!hasRadaring && botsAlive.length > 1) {
+          finalActions[botId] = {
+            mode: "RADAR",
+            action: prepareAction(players[botId].radar, x, y)
+          };
+          hasRadaring = true;
+        }
+        else {
+          finalActions[botId] = {
+            mode: "ATTACK",
+            action: prepareAction(players[botId].cannon, x, y)
+          };
+        }
       }
-      return result;
+      return finalActions;
     }, {});
   }
 
@@ -81,9 +94,6 @@ module.exports = function Ai() {
       evadePositions = evadePositions.splice(index, 1);
     }
     while (isLegalPosition(x, y, config.radius));
-
-    console.log(x);
-    console.log(y);
 
     plannedActions[event.botId] = {
       mode: "EVADE",
@@ -133,8 +143,7 @@ module.exports = function Ai() {
   }
 
   return {
-    // The AI must return these three attributes
-    teamname: teamname,
+    teamName: teamname,
     botNames: botNames,
     makeDecisions: makeDecisions
   };
