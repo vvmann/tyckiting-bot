@@ -5,6 +5,8 @@ var position = require("../../position.js");
 var chalk = require("chalk");
 
 // Change botNames and teamName to your choice.
+var teamname = "Los Collos Manos";
+
 var botNames = [
   "HerrManni",
   "Peenislintu",
@@ -61,16 +63,27 @@ module.exports = function Ai() {
   var lastTarget = {};
 
   function evade(config, players, event, plannedActions){
-      var maxMove = config.move;
-      var player = players[event.botId];
-      // TODO: fix hexgrid
-      var x = player.x + maxMove - maxMove * (Math.floor(Math.random() * maxMove));
-      var y = player.y + maxMove - maxMove * (Math.floor(Math.random() * maxMove));
-      plannedActions[event.botId] = {
-        mode: "EVADE",
-        action: prepareAction(player.move, x, y)
-          };
-      }
+    var evadePositions = [
+      {x: 0, y: -2}, {x: 1, y: -2}, {x: 2, y: -2}, {x: -1, y: -1}, {x: 2, y: -1}, {x: -2, y: 0}, {x: 2, y: 0},
+      {x: -2, y: 1}, {x: 1, y: 1}, {x: -2, y: 2}, {x: -1, y: 2}, {x: 0, y: 2}
+    ];
+    var maxMove = config.move;
+    var player = players[event.botId];
+
+    do {
+      var x = player.x + evadePositions[(Math.floor(Math.random() * evadePositions.length))].x;
+      var y = player.y + evadePositions[(Math.floor(Math.random() * evadePositions.length))].y;
+    }
+    while (x < config.radius && x > -config.radius && y < config.radius && y > -config.radius);
+
+    console.log(x);
+    console.log(y);
+
+    plannedActions[event.botId] = {
+      mode: "EVADE",
+      action: prepareAction(player.move, x, y)
+    };
+  }
 
   function makeDecisions(roundId, events, bots, config) {
 
@@ -94,7 +107,7 @@ module.exports = function Ai() {
 
     // Resolve events
     _.each(events, function(event) {
-      if (event.event === "damaged") {
+      if (event.event === "damaged" || event.event === "detected") {
         evade(config, players, event, plannedActions);
       } else if (event.event === "hit") {
         plannedActions = planForAttack(plannedActions, players, lastTarget.x, lastTarget.y);
@@ -102,8 +115,6 @@ module.exports = function Ai() {
         var pos = event.pos;
         plannedActions = planForAttack(plannedActions, players, pos.x, pos.y);
         lastTarget = _.clone(pos);
-      } else if (event.event === "detected") {
-        evade(config, players, event, plannedActions);
       } else if (event.event === "noaction") {
         console.log("Bot did not respond in required time", event.data);
       }
@@ -117,6 +128,7 @@ module.exports = function Ai() {
 
   return {
     // The AI must return these three attributes
+    teamname: teamname,
     botNames: botNames,
     makeDecisions: makeDecisions
   };
